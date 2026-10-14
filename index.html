@@ -754,7 +754,7 @@ window.TC = (function () {
     return `<a class="wa${t.erinnertAm ? ' sent' : ''}" href="https://wa.me/${num}?text=${encodeURIComponent(waText(t, fee))}" target="_blank" rel="noopener" data-act="wa" data-path="${esc(t.path)}" title="${esc(title)}">${icon}${done}</a>`;
   }
 
-  /* ---------- Schichtzeiten aus den Anstoßzeiten: 30 Min vorher bis 30 Min nach Ende der Jugend ---------- */
+  /* ---------- Schichtzeiten aus den Anstoßzeiten: 15 Min vor Anstoß bis Anstoß der nächsten Jugend (15 Min Überschneidung) ---------- */
   function hm2min(s) { const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '').trim()); return m ? (+m[1]) * 60 + (+m[2]) : null; }
   function min2hm(n) { n = ((n % 1440) + 1440) % 1440; return String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0'); }
   function jugendWindow(key) {
@@ -768,7 +768,7 @@ window.TC = (function () {
   function shiftLabel(s) {
     if (!s || !s.jugend) return (s && s.schicht) || '';
     const w = jugendWindow(s.jugend);
-    return w ? `${min2hm(w.start - 30)}–${min2hm(w.end + 30)}` : (s.schicht || '–');
+    return w ? `${min2hm(w.start - 15)}–${min2hm(w.end)}` : (s.schicht || '–');
   }
 
   /* ---------- Helfer ---------- */
