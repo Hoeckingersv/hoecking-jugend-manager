@@ -239,6 +239,9 @@ tfoot td{font-weight:700;border-bottom:0;border-top:2px solid var(--ink)}
 .hcard h3 small{font:600 13px var(--body);text-transform:none;letter-spacing:0;color:var(--muted)}
 .shift{display:grid;grid-template-columns:7.2rem minmax(0,1fr);gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .time{font:700 17px var(--display);font-variant-numeric:tabular-nums}
+.rot{margin-top:14px}
+.rot-h{margin:0 0 4px;font:700 15px var(--display);text-transform:uppercase;letter-spacing:.04em}
+.rot td,.rot th{padding:6px 8px}
 .time small{display:block;font:600 12.5px var(--body);color:var(--muted);letter-spacing:0;margin-top:1px}
 .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 @media (max-width:420px){.shift{grid-template-columns:minmax(0,1fr)}}
@@ -771,6 +774,25 @@ window.TC = (function () {
     return w ? `${min2hm(w.start - 15)}–${min2hm(w.end)}` : (s.schicht || '–');
   }
 
+  /* Schiri-Einteilung: pro Halbtag 4 Schiris, Platz 1 und 2 im Wechsel, gleich viel Einsatzzeit */
+  function schiriRotation(items) {
+    const halves = {};
+    items.forEach(s => { if (s.halb) { (halves[s.halb] = halves[s.halb] || { docs: [], bloecke: null, titel: '' }).docs.push(s); if (Array.isArray(s.bloecke)) halves[s.halb].bloecke = s.bloecke; if (s.titel) halves[s.halb].titel = s.titel; } });
+    const keys = Object.keys(halves); if (!keys.length) return '';
+    const nm = (d, k, fb) => String((d && d[k]) || '').trim() || fb;
+    return keys.map(k => {
+      const hv = halves[k]; const docs = hv.docs.slice().sort((a, b) => num(a.idx) - num(b.idx));
+      const d1 = docs[0] || {}, d2 = docs[1] || {};
+      if (!hv.bloecke) return '';
+      const rows = hv.bloecke.map((b, i) => {
+        const p1 = i % 2 === 0 ? nm(d1, 'p1', d1.ph1 || 'Schiri') : nm(d1, 'p2', d1.ph2 || 'Schiri');
+        const p2 = i % 2 === 0 ? nm(d2, 'p1', d2.ph1 || 'Schiri') : nm(d2, 'p2', d2.ph2 || 'Schiri');
+        return `<tr><td>${esc(b)}</td><td>${esc(p1)}</td><td>${esc(p2)}</td></tr>`;
+      }).join('');
+      return `<div class="rot"><p class="rot-h">Einteilung ${esc(hv.titel || k)}</p><div class="scroll"><table><thead><tr><th>Zeit</th><th>Platz 1</th><th>Platz 2</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    }).join('') + '<p class="sub" style="margin-top:8px">Jeder Schiri pfeift zweimal 1,5 Stunden mit Pause dazwischen. Gewechselt wird nach dem laufenden Spiel.</p>';
+  }
+
   /* ---------- Helfer ---------- */
   function pHelfer(c) {
     const groups = [];
@@ -780,7 +802,9 @@ window.TC = (function () {
     if (!groups.length) return h + '<p class="empty-state">Noch keine Schichten angelegt.</p></section>';
     h += '<div class="hgrid">' + groups.map(g => {
       const n = g.items.reduce((m, s) => m + (String(s.p1 || '').trim() ? 1 : 0) + (String(s.p2 || '').trim() ? 1 : 0), 0);
-      return `<article class="hcard"><h3>${esc(g.name)}<small>${n}/${g.items.length * 2}</small></h3>${g.items.map(s => `<div class="shift"><span class="time">${esc(shiftLabel(s))}${s.jugend ? `<small>${esc(jugLabel(s.jugend))}</small>` : ''}</span><div class="pair">${['p1', 'p2'].map((k, i) => inp(s.path, k, s[k], { ph: S.readOnly ? 'frei' : 'Person ' + (i + 1), cls: String(s[k] || '').trim() ? '' : 'open', label: `${g.name} ${shiftLabel(s)} Person ${i + 1}` })).join('')}</div></div>`).join('')}</article>`;
+      const sub = s => s.jugend ? jugLabel(s.jugend) : (s.hinweis || '');
+      const ph = (s, i) => S.readOnly ? (s['ph' + (i + 1)] ? s['ph' + (i + 1)] + ': frei' : 'frei') : (s['ph' + (i + 1)] || 'Person ' + (i + 1));
+      return `<article class="hcard"><h3>${esc(g.name)}<small>${n}/${g.items.length * 2}</small></h3>${g.items.map(s => `<div class="shift"><span class="time">${esc(shiftLabel(s))}${sub(s) ? `<small>${esc(sub(s))}</small>` : ''}</span><div class="pair">${['p1', 'p2'].map((k, i) => inp(s.path, k, s[k], { ph: ph(s, i), cls: String(s[k] || '').trim() ? '' : 'open', label: `${g.name} ${shiftLabel(s)} ${s['ph' + (i + 1)] || 'Person ' + (i + 1)}` })).join('')}</div></div>`).join('')}${schiriRotation(g.items)}</article>`;
     }).join('') + '</div></section>';
     return h;
   }
