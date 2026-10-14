@@ -39,6 +39,7 @@
   --bad:#b3261e; --bad-bg:#fbe4e1; --on-bad:#ffffff;
   --bad-on-band:#ff9b92;
   --logo-filter:none;
+  --wa:#127a3e; --wa-bg:#e3f4ea;
   --display:"Barlow Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
@@ -52,6 +53,7 @@
     --warn:#f2b866; --warn-bg:#36280f;
     --bad:#ff8f86; --bad-bg:#3a1916; --on-bad:#0f0f0e;
     --logo-filter:invert(1);
+    --wa:#4fd88a; --wa-bg:#143323;
     color-scheme:dark;
   }
 }
@@ -64,6 +66,7 @@
   --warn:#f2b866; --warn-bg:#36280f;
   --bad:#ff8f86; --bad-bg:#3a1916; --on-bad:#0f0f0e;
   --logo-filter:invert(1);
+  --wa:#4fd88a; --wa-bg:#143323;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -203,13 +206,30 @@ tfoot td{font-weight:700;border-bottom:0;border-top:2px solid var(--ink)}
 .money{text-align:right;font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .money b{display:block;font:700 19px/1.1 var(--display);color:var(--ink)}
 @media (max-width:520px){.jhead{grid-template-columns:auto minmax(0,1fr)}.money{grid-column:1/-1;text-align:left}}
-.trow{display:grid;grid-template-columns:1.5rem minmax(0,1fr) auto 4.6rem auto;gap:8px;align-items:center}
+.trow{display:grid;grid-template-columns:1.5rem minmax(0,1fr) auto 4.6rem auto auto;gap:8px;align-items:center}
+.wa{display:inline-flex;align-items:center;justify-content:center;width:7.6rem;gap:6px;white-space:nowrap;font:600 13px/1 var(--body);text-decoration:none;color:var(--wa);border:1px solid var(--wa);border-radius:7px;padding:7px 10px}
+.wa:hover{background:var(--wa-bg)}
+.wa.sent{color:var(--muted);border-color:var(--line-strong)}
+.wa.sent:hover{color:var(--wa);border-color:var(--wa)}
+.wa.off{color:var(--faint);border:1px dashed var(--line-strong);cursor:help}
+.wa-sp{display:block;width:0}
+.tact{display:flex;gap:6px;align-items:center}
+.qbtn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;width:6.8rem;white-space:nowrap;font:600 13px/1 var(--body);color:var(--ink);background:transparent;border:1px solid var(--line-strong);border-radius:7px;padding:7px 10px;cursor:pointer}
+.qbtn:hover{border-color:var(--ink);background:var(--input)}
+.qbtn.wide{width:auto}
+.qbtn.off{color:var(--faint);border-style:dashed;cursor:help}
+.q-sp{display:block;width:6.8rem}
+.qall{align-self:end}
+.steps{margin:0;padding-left:1.3rem;display:grid;gap:10px;max-width:70ch}
+.steps li{padding-left:4px}
 .tno{color:var(--faint);font-variant-numeric:tabular-nums;font-size:13.5px;text-align:right}
 .fee{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
 .fee.frei{color:var(--muted);font-weight:400}
 @media (max-width:560px){
-  .trow{grid-template-columns:1.5rem minmax(0,1fr) auto auto;grid-template-areas:"no name name del" ". seg fee fee";row-gap:6px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .trow{grid-template-columns:1.5rem minmax(0,1fr) auto auto;grid-template-areas:"no name name del" ". seg fee fee" ". wa wa wa";row-gap:6px;padding-bottom:8px;border-bottom:1px solid var(--line)}
   .trow .tno{grid-area:no}.trow .tname{grid-area:name}.trow .seg{grid-area:seg;justify-self:start}.trow .fee{grid-area:fee}.trow .del,.trow .del-sp{grid-area:del}
+  .trow .tact{grid-area:wa;justify-self:start}
+  .trow .q-sp{display:none}
 }
 
 /* Helfer */
@@ -219,6 +239,7 @@ tfoot td{font-weight:700;border-bottom:0;border-top:2px solid var(--ink)}
 .hcard h3 small{font:600 13px var(--body);text-transform:none;letter-spacing:0;color:var(--muted)}
 .shift{display:grid;grid-template-columns:7.2rem minmax(0,1fr);gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .time{font:700 17px var(--display);font-variant-numeric:tabular-nums}
+.time small{display:block;font:600 12.5px var(--body);color:var(--muted);letter-spacing:0;margin-top:1px}
 .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 @media (max-width:420px){.shift{grid-template-columns:minmax(0,1fr)}}
 
@@ -404,7 +425,7 @@ window.TC = (function () {
     uid: null, verlauf: [], personen: {}, logOpen: false, stand: null };
   const DOCS = new Map();
   const NAMES = {};
-  let USER = null, lastLog = '';
+  let USER = null, lastLog = '', DL = null, QM = null;
   const queues = new Map();
   const $ = s => document.querySelector(s);
   const num = TC.num;
@@ -452,7 +473,7 @@ window.TC = (function () {
     checkliste: { aufgabe: 'Aufgabe', zustaendig: 'Zuständig', erledigt: 'Erledigt' },
     kontakte: { stelle: 'Stelle', ansprechpartner: 'Ansprechpartner', telefon: 'Telefon', email: 'E-Mail', notiz: 'Notiz' },
     posten: { bezeichnung: 'Bezeichnung', betrag: 'Betrag' },
-    turnier: { name: 'Turniername', verein: 'Verein', datum: 'Datum', ort: 'Halle', adresse: 'Adresse', modus: 'Spielmodus' },
+    turnier: { name: 'Turniername', verein: 'Verein', datum: 'Datum', ort: 'Halle', adresse: 'Adresse', modus: 'Spielmodus', ende: 'Turnierende' },
     zahlen: { startgeld: 'Startgeld je Mannschaft', befreit: 'Startgeldfrei-Regel', medaillenProTeam: 'Medaillen je Mannschaft', pokaleProJugend: 'Pokale je Jugend', semmelnProTeam: 'Semmeln je Mannschaft', kuchenProJugend: 'Kuchen je Jugend', sponsor: 'Sponsor Kellner', anzahlSemmeln: 'Anzahl Semmeln', preisSemmel: 'Preis pro Semmel', anzahlBrezen: 'Anzahl Butterbrezen', preisBreze: 'Preis pro Butterbreze', stueckeProKuchen: 'Stücke pro Kuchen', preisKuchenstueck: 'Preis pro Stück Kuchen', anzahlKaffee: 'Anzahl Kaffee', preisKaffee: 'Preis pro Kaffee', flaschen: 'Anzahl Flaschen', gewinnFlasche: 'Gewinn pro Flasche', hallenmiete: 'Hallenmiete', preisMedaille: 'Preis pro Medaille', einkaufPro10Semmeln: 'Semmel-Einkauf je 10 Stück' },
     jug: { start: 'Anstoß', label: 'Name', spielzeit: 'Spielzeit' }
   };
@@ -477,7 +498,7 @@ window.TC = (function () {
   function subjectOf(col, d) {
     d = d || {};
     if (col === 'teams') return `${d.name || 'Mannschaft ohne Namen'} (${jugLabel(d.jugend)})`;
-    if (col === 'helfer') return `${d.bereich || 'Helfer'} ${d.schicht || ''}`.trim();
+    if (col === 'helfer') return `${d.bereich || 'Helfer'} ${d.jugend ? jugLabel(d.jugend) + ' ' : ''}${shiftLabel(d)}`.trim();
     if (col === 'einkauf') return d.artikel || 'Artikel ohne Namen';
     if (col === 'checkliste') return d.aufgabe ? short(d.aufgabe) : 'Aufgabe ohne Namen';
     if (col === 'kontakte') return d.stelle || 'Kontakt';
@@ -610,7 +631,7 @@ window.TC = (function () {
     const f = (field, label, o) => `<label class="field${o && o.wide ? ' wide' : ''}"><span>${label}</span>${inp(TP, field, T[field], Object.assign({ label }, o || {}))}</label>`;
     const q = [T.ort, T.adresse].filter(Boolean).join(', ');
     h += `<section class="block"><div class="block-head"><h2>Turnier-Infos</h2><p class="sub">${MODE === 'helfer' ? 'Halle, Adresse und Spielmodus' : 'erscheinen oben im Kopf'}</p></div>
-      <div class="form">${f('name', 'Turniername', { wide: true })}${f('verein', 'Verein')}${f('datum', 'Datum', { type: 'date' })}${f('ort', 'Halle')}${f('adresse', 'Adresse')}${f('modus', 'Spielmodus', { wide: true })}</div>
+      <div class="form">${f('name', 'Turniername', { wide: true })}${f('verein', 'Verein')}${f('datum', 'Datum', { type: 'date' })}${f('ort', 'Halle')}${f('adresse', 'Adresse')}${f('modus', 'Spielmodus')}${f('ende', 'Turnierende (letzte Jugend)', { ph: '20:00' })}</div>
       ${q ? `<a class="route" href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(q)}" target="_blank" rel="noopener">Route zur Halle öffnen ↗</a>` : ''}
     </section>`;
     return h;
@@ -626,6 +647,7 @@ window.TC = (function () {
         <label class="param"><span>Frei, wenn Name enthält</span>${inp(ZP, 'befreit', z.befreit, { cls: 'w-mid', label: 'Startgeldfrei, wenn Name enthält' })}</label>
         <label class="param"><span>Medaillen je Mannschaft</span>${inp(ZP, 'medaillenProTeam', z.medaillenProTeam, { type: 'num', cls: 'w-xs', label: 'Medaillen je Mannschaft' })}</label>
         <label class="param"><span>Pokale je Jugend</span>${inp(ZP, 'pokaleProJugend', z.pokaleProJugend, { type: 'num', cls: 'w-xs', label: 'Pokale je Jugend' })}</label>
+        ${QM && QM._alle && MODE !== 'helfer' ? `<div class="param qall"><span>Quittungen</span><button type="button" class="qbtn wide" data-act="quittung-alle">${PDF_ICON}Alle ${QM._alle.count} Quittungen (PDF)</button></div>` : ''}
       </div>
       <div class="scroll"><table><thead><tr><th>Jugend</th><th class="r">Teams</th><th class="r">Medaillen</th><th class="r">Soll</th><th class="r">Eingegangen</th><th class="r">Offen</th></tr></thead>
       <tbody>${sumRows}</tbody>
@@ -641,7 +663,7 @@ window.TC = (function () {
       const rows = g.items.map((t, i) => {
         const fee = TC.fee(t, z);
         const segs = ['Ja', 'Nein', 'Frei'].map(v => `<button type="button" data-act="pay" data-path="${esc(t.path)}" data-v="${v}" aria-pressed="${t.bezahlt === v}"${S.readOnly ? ' disabled' : ''}>${PAY[v]}</button>`).join('');
-        return `<div class="trow"><span class="tno">${i + 1}</span>${inp(t.path, 'name', t.name, { cls: 'tname', ph: 'Vereinsname', label: 'Mannschaft' })}<div class="seg" role="group" aria-label="${esc('Startgeld ' + (t.name || ''))}">${segs}</div><span class="fee${fee ? '' : ' frei'}">${fee ? eur(fee) : 'frei'}</span>${delBtn(t.path, t.name)}</div>`;
+        return `<div class="trow"><span class="tno">${i + 1}</span>${inp(t.path, 'name', t.name, { cls: 'tname', ph: 'Vereinsname', label: 'Mannschaft' })}<div class="seg" role="group" aria-label="${esc('Startgeld ' + (t.name || ''))}">${segs}</div><span class="fee${fee ? '' : ' frei'}">${fee ? eur(fee) : 'frei'}</span><span class="tact">${waBtn(t, fee)}${qBtn(t)}</span>${delBtn(t.path, t.name)}</div>`;
       }).join('');
       h += `<section class="block">
         <div class="jhead">
@@ -656,6 +678,99 @@ window.TC = (function () {
     return h;
   }
 
+  /* ---------- Quittungen als PDF (vorbereitet, liegen als Dateien bei der Seite) ---------- */
+  const PDF_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/></svg>';
+  function qBtn(t) {
+    if (MODE === 'helfer') return '';
+    const m = QM && QM[t.id];
+    if (!m) return '<span class="q-sp" aria-hidden="true"></span>';
+    if (m.name !== String(t.name || '').trim()) return `<span class="qbtn off" title="Der Name wurde geändert. Lass die Quittung von Claude neu erstellen.">Quittung</span>`;
+    return `<button type="button" class="qbtn" data-act="quittung" data-id="${esc(t.id)}" title="${esc('Quittung ' + m.nr + ' für ' + m.name + ' herunterladen')}">${PDF_ICON}Quittung</button>`;
+  }
+  async function download(file, filename) {
+    if (!DL) { toast('Herunterladen ist in dieser Ansicht nicht möglich. Öffne die Seite in claude.ai.'); return; }
+    try {
+      const r = await fetch('quittungen/' + encodeURIComponent(file));
+      if (!r.ok) throw new Error('http ' + r.status);
+      const blob = await r.blob();
+      await DL.save({ filename, data: blob });
+    } catch (e) {
+      if (e && (e.code === 'declined')) return;
+      if (e && e.code === 'rate_limited') { toast('Es ist schon ein Download offen. Bitte kurz warten.'); return; }
+      toast('Die Quittung konnte nicht heruntergeladen werden.');
+    }
+  }
+
+  /* ---------- Daten für die öffentliche Helfer-Seite (ohne Bilanz, ohne Telefonnummern) ---------- */
+  async function exportHelfer() {
+    if (!allLoaded()) { toast('Die Daten laden noch. Bitte kurz warten.'); return; }
+    if (!DL) { toast('Herunterladen ist in dieser Ansicht nicht möglich. Öffne die Seite in claude.ai.'); return; }
+    const keep = ['startgeld', 'befreit', 'medaillenProTeam', 'pokaleProJugend', 'semmelnProTeam', 'kuchenProJugend', 'anzahlSemmeln', 'anzahlBrezen'];
+    const z = S.zahlen || {}, zahlen = {};
+    keep.forEach(k => { if (k in z) zahlen[k] = z[k]; });
+    const clean = arr => arr.map(x => { const o = Object.assign({}, x); delete o.path; delete o.telefon; delete o.erinnertAm; return o; });
+    const daten = { stand: new Date().toISOString(), turnier: S.turnier || {}, zahlen,
+      teams: clean(S.teams), helfer: clean(S.helfer), einkauf: clean(S.einkauf), checkliste: clean(S.checkliste), kontakte: clean(S.kontakte), posten: [] };
+    try { await DL.save({ filename: 'daten.json', data: JSON.stringify(daten) }); toast('daten.json gespeichert. Jetzt bei GitHub hochladen.'); }
+    catch (e) { if (e && e.code === 'declined') return; toast('Die Datei konnte nicht heruntergeladen werden.'); }
+  }
+
+  /* ---------- WhatsApp-Erinnerung pro Mannschaft ---------- */
+  function waNumber(tel) {
+    let n = String(tel || '').trim();
+    if (!n) return '';
+    const plus = n.startsWith('+');
+    n = n.replace(/\D/g, '');
+    if (!n) return '';
+    if (plus) return n;
+    if (n.startsWith('00')) return n.slice(2);
+    if (n.startsWith('0')) return '49' + n.slice(1);
+    return n;
+  }
+  function waText(t, fee) {
+    const T = S.turnier || {};
+    const j = jugList().find(x => x.key === t.jugend) || {};
+    const d = T.datum ? new Date(T.datum + 'T12:00:00') : null;
+    const datum = d && !isNaN(d) ? d.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+    const name = String(t.ansprechpartner || '').trim().split(/\s+/)[0];
+    const lines = [
+      `Hallo${name ? ' ' + name : ''},`,
+      '',
+      `kurze Erinnerung an das ${T.name || 'Hallenturnier'}${datum ? ' am ' + datum : ''}${T.ort ? ' in der ' + T.ort : ''}${T.adresse ? ', ' + T.adresse : ''}.`,
+      '',
+      `${t.name || 'Eure Mannschaft'} (${j.label || 'Jugend'}): Anstoß ${j.start ? j.start + ' Uhr' : 'folgt'}${j.spielzeit ? ', Spielzeit ' + j.spielzeit + ' Minuten' : ''}${T.modus ? ', ' + T.modus : ''}.`
+    ];
+    if (fee > 0 && t.bezahlt !== 'Ja') lines.push('', `Das Startgeld von ${eur(fee)} ist noch offen. Bitte vorher überweisen oder am Turniertag mitbringen.`);
+    lines.push('', 'Bitte gebt kurz Bescheid, ob alles passt. Wir freuen uns auf euch!', '', `Sportliche Grüße${T.verein ? '\n' + T.verein : ''}`);
+    return lines.join('\n');
+  }
+  function waBtn(t, fee) {
+    if (MODE === 'helfer') return '<span class="wa-sp" aria-hidden="true"></span>';
+    const num = waNumber(t.telefon);
+    const icon = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.7 11.7 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.2-.2-.5-.3Z"/></svg>';
+    if (!num) return `<span class="wa off" title="Handynummer unter „Kontakte“ eintragen">${icon}Keine Nr.</span>`;
+    const done = t.erinnertAm ? `Erinnert ✓` : 'Erinnern';
+    const title = t.erinnertAm ? `Zuletzt erinnert: ${when(t.erinnertAm)}. Nochmal per WhatsApp erinnern` : `Erinnerung per WhatsApp an ${t.ansprechpartner || t.name || 'die Mannschaft'}`;
+    return `<a class="wa${t.erinnertAm ? ' sent' : ''}" href="https://wa.me/${num}?text=${encodeURIComponent(waText(t, fee))}" target="_blank" rel="noopener" data-act="wa" data-path="${esc(t.path)}" title="${esc(title)}">${icon}${done}</a>`;
+  }
+
+  /* ---------- Schichtzeiten aus den Anstoßzeiten: 30 Min vorher bis 30 Min nach Ende der Jugend ---------- */
+  function hm2min(s) { const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '').trim()); return m ? (+m[1]) * 60 + (+m[2]) : null; }
+  function min2hm(n) { n = ((n % 1440) + 1440) % 1440; return String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0'); }
+  function jugendWindow(key) {
+    const list = jugList().map(j => ({ j, s: hm2min(j.start) })).filter(x => x.s != null).sort((a, b) => a.s - b.s);
+    const i = list.findIndex(x => x.j.key === key); if (i < 0) return null;
+    const start = list[i].s;
+    const ende = hm2min((S.turnier || {}).ende);
+    const end = i + 1 < list.length ? list[i + 1].s : (ende != null ? ende : start + 120);
+    return { start, end };
+  }
+  function shiftLabel(s) {
+    if (!s || !s.jugend) return (s && s.schicht) || '';
+    const w = jugendWindow(s.jugend);
+    return w ? `${min2hm(w.start - 30)}–${min2hm(w.end + 30)}` : (s.schicht || '–');
+  }
+
   /* ---------- Helfer ---------- */
   function pHelfer(c) {
     const groups = [];
@@ -665,7 +780,7 @@ window.TC = (function () {
     if (!groups.length) return h + '<p class="empty-state">Noch keine Schichten angelegt.</p></section>';
     h += '<div class="hgrid">' + groups.map(g => {
       const n = g.items.reduce((m, s) => m + (String(s.p1 || '').trim() ? 1 : 0) + (String(s.p2 || '').trim() ? 1 : 0), 0);
-      return `<article class="hcard"><h3>${esc(g.name)}<small>${n}/${g.items.length * 2}</small></h3>${g.items.map(s => `<div class="shift"><span class="time">${esc(s.schicht)}</span><div class="pair">${['p1', 'p2'].map((k, i) => inp(s.path, k, s[k], { ph: S.readOnly ? 'frei' : 'Person ' + (i + 1), cls: String(s[k] || '').trim() ? '' : 'open', label: `${g.name} ${s.schicht} Person ${i + 1}` })).join('')}</div></div>`).join('')}</article>`;
+      return `<article class="hcard"><h3>${esc(g.name)}<small>${n}/${g.items.length * 2}</small></h3>${g.items.map(s => `<div class="shift"><span class="time">${esc(shiftLabel(s))}${s.jugend ? `<small>${esc(jugLabel(s.jugend))}</small>` : ''}</span><div class="pair">${['p1', 'p2'].map((k, i) => inp(s.path, k, s[k], { ph: S.readOnly ? 'frei' : 'Person ' + (i + 1), cls: String(s[k] || '').trim() ? '' : 'open', label: `${g.name} ${shiftLabel(s)} Person ${i + 1}` })).join('')}</div></div>`).join('')}</article>`;
     }).join('') + '</div></section>';
     return h;
   }
@@ -958,6 +1073,17 @@ window.TC = (function () {
     const b = e.target.closest('[data-act]'); if (!b) return;
     const a = b.dataset.act;
     if (a === 'tab') { setTab(b.dataset.tab); return; }
+    if (a === 'quittung') { const m = QM && QM[b.dataset.id]; if (m) download(m.file, m.download); return; }
+    if (a === 'helfer-export') { exportHelfer(); return; }
+    if (a === 'quittung-alle') { if (QM && QM._alle) download(QM._alle.file, 'Quittungen_Startgeld_alle_Mannschaften.pdf'); return; }
+    if (a === 'wa') {
+      if (!S.readOnly && S.db) {
+        const path = b.dataset.path, t = DOCS.get(path);
+        write(path, { erinnertAm: Date.now() });
+        logEntry('Mannschaften', `WhatsApp-Erinnerung an ${subjectOf('teams', t)} geöffnet`);
+      }
+      return;
+    }
     if (a === 'log-toggle') { S.logOpen = !S.logOpen; if (S.logOpen && !S.readOnly) pendingFocus = (S.uid && !S.personen[S.uid] && !(NAMES[S.uid] && NAMES[S.uid].name)) ? 'alias' : pendingFocus; schedule(); return; }
     if (S.readOnly || !S.db) return;
     if (a === 'pay') {
@@ -1044,8 +1170,10 @@ window.TC = (function () {
   render();
   (async () => {
     if (MODE === 'helfer') { loadHelfer(); return; }
+    fetch('quittungen/index.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => { if (j) { QM = j; force(); } }).catch(() => {});
     const c = window.claude;
     if (!c || typeof c.use !== 'function') { S.conn = 'none'; force(); return; }
+    c.use('downloads').then(d => { DL = d; }).catch(() => {});
     let db = null, user = null;
     try { [db, user] = await Promise.all([c.use('db'), c.use('user')]); } catch (_) {}
     if (!db) { S.conn = 'none'; force(); return; }
