@@ -5,7 +5,10 @@ def load(col):
     for f in sorted(glob.glob(os.path.join(dump, col, '*.json'))):
         d = json.load(open(f, encoding='utf-8'))
         if isinstance(d, dict) and isinstance(d.get('data'), dict): d = d['data']
-        d = dict(d); d['id'] = os.path.basename(f)[:-5]; d.pop('telefon', None); res.append(d)
+        d = dict(d); d['id'] = os.path.basename(f)[:-5]; d.pop('telefon', None)
+        if col == 'teams':
+            for k in ('email', 'erinnertAm'): d.pop(k, None)
+        res.append(d)
     return res
 ein = {d['id']: d for d in load('einstellungen')}
 keep = ['startgeld','befreit','medaillenProTeam','pokaleProJugend','semmelnProTeam','kuchenProJugend','anzahlSemmeln','anzahlBrezen']
