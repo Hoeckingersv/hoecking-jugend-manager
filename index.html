@@ -1134,6 +1134,7 @@ window.TC = (function () {
         else if (e.auto === 'semmeln') { men = inp(ZP, 'anzahlSemmeln', z.anzahlSemmeln, { type: 'num', cls: 'men', label: 'Menge Semmeln' }); hint = `Richtwert ${num(z.semmelnProTeam)} je Mannschaft = ${c.semmelRicht} · zählt auch in der Bilanz`; }
         else if (e.auto === 'brezen') { men = inp(ZP, 'anzahlBrezen', z.anzahlBrezen, { type: 'num', cls: 'men', label: 'Menge Butterbrezen' }); hint = 'zählt auch in der Bilanz'; }
         else men = inp(e.path, 'menge', e.menge, { type: 'num', cls: 'men', label: 'Menge ' + (e.artikel || '') });
+        if (e.notiz) hint = e.notiz + (hint ? ' · ' + hint : '');
         return `<div class="erow${e.besorgt ? ' done' : ''}">${chk(e.path, 'besorgt', e.besorgt, 'Besorgt: ' + (e.artikel || ''))}${inp(e.path, 'artikel', e.artikel, { cls: 'art', ph: 'Artikel', label: 'Artikel' })}${men}${inp(e.path, 'einheit', e.einheit, { cls: 'ein', ph: 'Einheit', label: 'Einheit ' + (e.artikel || '') })}${inp(e.path, 'zustaendig', e.zustaendig, { cls: 'zus', ph: 'Wer besorgt?', label: 'Zuständig für ' + (e.artikel || '') })}${delBtn(e.path, e.artikel)}${hint ? `<p class="hint">${esc(hint)}</p>` : ''}</div>`;
       }).join('');
       if (!items.length && !KATS.includes(k)) return;
